@@ -9,7 +9,7 @@ export default function AdminOrders() {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        fetch('http://YOUR-BACKEND.onrender.com/api/admin/orders', {
+        fetch('https://freshfromhome9.onrender.com/api/admin/orders', {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => res.json())
@@ -19,7 +19,7 @@ export default function AdminOrders() {
 
     const confirmOrder = async (id: number) => {
         const token = localStorage.getItem('token');
-        await fetch(`http://YOUR-BACKEND.onrender.com/api/admin/orders/${id}/confirm`, {
+        await fetch('https://freshfromhome9.onrender.com/api/admin/orders/${id}/confirm', {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` }
         });
