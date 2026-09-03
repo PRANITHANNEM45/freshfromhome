@@ -27,7 +27,7 @@ export default function Checkout() {
     const [utrNumber, setUtrNumber] = useState('');
     const [copiedUpi, setCopiedUpi] = useState(false);
     const [paymentConfig, setPaymentConfig] = useState({
-        upiId: '7893260269@okaxis',
+        upiId: 'annemnagapranitheswarreddy45-2@okicici',
         payeeName: 'ANNEM NAGA PRANITHESWARREDDY',
         merchantMobile: '7893260269',
         razorpayKeyId: '',

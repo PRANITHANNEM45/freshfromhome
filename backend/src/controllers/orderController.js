@@ -12,7 +12,7 @@ const getRazorpayInstance = () => {
 
 exports.getPaymentConfig = (req, res) => {
     res.json({
-        upiId: process.env.MERCHANT_UPI_ID || '7893260269@okaxis',
+        upiId: process.env.MERCHANT_UPI_ID || 'annemnagapranitheswarreddy45-2@okicici',
         payeeName: process.env.MERCHANT_PAYEE_NAME || 'ANNEM NAGA PRANITHESWARREDDY',
         merchantMobile: '7893260269',
         razorpayKeyId: process.env.RAZORPAY_KEY_ID || null,
