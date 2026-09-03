@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/config/api';
 
 interface Product {
     id: number;
@@ -20,6 +21,7 @@ export default function Shop() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const [mounted, setMounted] = useState(false);
     const { user, isAuthenticated } = useAuth();
     const router = useRouter();
@@ -43,7 +45,7 @@ export default function Shop() {
             try {
                 setLoading(true);
                 setError(null);
-                const res = await fetch('http://localhost:5000/api/products');
+                const res = await fetch(`${API_URL}/api/products`);
 
                 if (!res.ok) {
                     throw new Error(`Failed to fetch products: ${res.status}`);
@@ -122,33 +124,51 @@ export default function Shop() {
         );
     }
 
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div>
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
                     type="text"
-                    placeholder="Search for FRESH items..."
+                    placeholder="Search for milk, ghee, vegetables..."
                     className="input"
                     style={{ maxWidth: '400px' }}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {searchQuery && (
+                    <button
+                        onClick={() => setSearchQuery('')}
+                        style={{
+                            background: 'none',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text-muted)',
+                            padding: '0.5rem 1rem',
+                            borderRadius: 'var(--radius)',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Clear
+                    </button>
+                )}
             </div>
 
-            {products.length === 0 ? (
+            {filteredProducts.length === 0 ? (
                 <div style={{
                     textAlign: 'center',
                     padding: '3rem',
                     color: 'var(--text-muted)'
                 }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
-                    <p>No products available at the moment</p>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                    <p>No products found matching "{searchQuery}"</p>
                 </div>
             ) : (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                    gap: '1.5rem'
-                }}>
-                    {products.map((product) => (
+                <div className="product-grid">
+                    {filteredProducts.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))}
                 </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/config/api';
 
 export default function MyOrders() {
     const [orders, setOrders] = useState<any[]>([]);
@@ -11,11 +12,7 @@ export default function MyOrders() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        // Use the admin endpoint for now but filter by user on backend normally.
-        // Since we didn't make a specific 'my-orders' endpoint yet, let's make one or filter the admin one?
-        // Actually, distinct endpoint is better. Let's assume /api/orders/my exist or create it.
-        // For now, let's fetch from a new endpoint we will create: GET /api/orders/my
-        fetch('http://localhost:5000/api/orders/my', {
+        fetch(`${API_URL}/api/orders/my`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => res.json())
@@ -23,24 +20,51 @@ export default function MyOrders() {
             .catch(err => console.error(err));
     }, []);
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Confirmed': return '#34d399';
+            case 'Delivered': return '#60a5fa';
+            case 'Cancelled': return '#f87171';
+            default: return '#fbbf24';
+        }
+    };
+
     return (
-        <div>
-            <h1 style={{ marginBottom: '2rem' }}>My Applications / Orders</h1>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <h1 style={{ marginBottom: '2rem' }}>My Orders</h1>
             {orders.length === 0 ? (
-                <p>No orders found.</p>
+                <div className="card glass" style={{ textAlign: 'center', padding: '3rem' }}>
+                    <p style={{ color: 'var(--text-muted)' }}>You haven't placed any orders yet.</p>
+                </div>
             ) : (
                 <div style={{ display: 'grid', gap: '1.5rem' }}>
                     {orders.map(order => (
                         <div key={order.id} className="card glass">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <span style={{ fontWeight: 'bold' }}>Order #{order.id}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Order #{order.id}</span>
                                 <span style={{
-                                    color: order.status === 'Confirmed' ? '#34d399' : '#fbbf24',
-                                    fontWeight: 600
+                                    color: getStatusColor(order.status),
+                                    fontWeight: 600,
+                                    padding: '0.2rem 0.6rem',
+                                    borderRadius: '9999px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: `1px solid ${getStatusColor(order.status)}`
                                 }}>{order.status}</span>
                             </div>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-                            <p style={{ fontWeight: 'bold', marginTop: '0.5rem' }}>Total: ₹{order.totalAmount}</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Date: {new Date(order.createdAt).toLocaleString('en-IN')}</p>
+                            {order.paymentMethod && (
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+                                    💳 Payment: <strong>{order.paymentMethod}</strong> {order.paymentRef ? `(${order.paymentRef})` : ''}
+                                </p>
+                            )}
+                            {order.shippingAddress && (
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                    📍 Delivery to: {order.shippingAddress}
+                                </p>
+                            )}
+                            <p style={{ fontWeight: 'bold', marginTop: '0.5rem', fontSize: '1.1rem', color: 'var(--primary)' }}>
+                                Total: ₹{order.totalAmount}
+                            </p>
                             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
                                 {order.SaleItems?.map((item: any) => (
                                     <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.2rem' }}>

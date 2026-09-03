@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/config/api';
 
 export default function Inventory() {
     const [products, setProducts] = useState<any[]>([]);
     const { user } = useAuth();
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/products').then(res => res.json()).then(setProducts);
+        fetch(`${API_URL}/api/products`).then(res => res.json()).then(setProducts);
     }, []);
 
     const updateProduct = async (id: number, price: number, stock: number) => {
         const token = localStorage.getItem('token');
-        await fetch(`http://localhost:5000/api/products/${id}`, {
+        await fetch(`${API_URL}/api/products/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -29,7 +30,7 @@ export default function Inventory() {
 
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+            const res = await fetch(`${API_URL}/api/products/${id}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -55,7 +56,7 @@ export default function Inventory() {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://localhost:5000/api/products', {
+            const res = await fetch(`${API_URL}/api/products`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -101,15 +102,15 @@ export default function Inventory() {
 
             <div style={{ display: 'grid', gap: '1rem' }}>
                 {products.map(p => (
-                    <div key={p.id} className="card glass" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div key={p.id} className="card glass" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '160px' }}>
                             <img src={p.image} alt={p.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
                             <div>
                                 <h3>{p.name}</h3>
                                 <span style={{ color: 'var(--text-muted)' }}>{p.category}</span>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Price (₹)</label>
                                 <input

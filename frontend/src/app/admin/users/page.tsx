@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/config/api';
 
 export default function AdminUsers() {
     const [username, setUsername] = useState('');
@@ -15,7 +16,7 @@ export default function AdminUsers() {
         const token = localStorage.getItem('token');
 
         try {
-            const res = await fetch('http://localhost:5000/api/admin/users', {
+            const res = await fetch(`${API_URL}/api/admin/users`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

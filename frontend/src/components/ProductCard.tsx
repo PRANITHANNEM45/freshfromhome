@@ -55,14 +55,16 @@ export default function ProductCard({ product }: { product: Product }) {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', background: 'var(--surface)', padding: '0.2rem', borderRadius: '12px' }}>
                                 <button
                                     onClick={() => removeFromCart(product.id)}
-                                    style={{ width: '40px', height: '40px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}
+                                    aria-label="Decrease quantity"
+                                    style={{ width: '42px', height: '42px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 'bold' }}
                                 >
                                     -
                                 </button>
-                                <span style={{ flex: 1, textAlign: 'center', fontWeight: 600, fontSize: '1.1rem' }}>{count}</span>
+                                <span style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>{count}</span>
                                 <button
                                     onClick={() => addToCart(product)}
-                                    style={{ width: '40px', height: '40px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}
+                                    aria-label="Increase quantity"
+                                    style={{ width: '42px', height: '42px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 'bold' }}
                                 >
                                     +
                                 </button>

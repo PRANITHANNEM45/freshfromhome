@@ -68,6 +68,11 @@ app.delete('/api/products/:id', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
+// Payment Routes
+app.get('/api/payment/config', orderController.getPaymentConfig);
+app.post('/api/payment/razorpay/create-order', verifyToken, orderController.createRazorpayOrder);
+app.post('/api/payment/razorpay/verify', verifyToken, orderController.verifyRazorpayPayment);
+
 // Order Routes
 app.post('/api/orders', verifyToken, orderController.createOrder); // Customer creates order
 
@@ -87,12 +92,32 @@ app.get('/api/orders/my', verifyToken, async (req, res) => {
 app.get('/api/admin/orders', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const orders = await Sale.findAll({
-            include: [SaleItem],
+            include: [
+                {
+                    model: SaleItem,
+                    include: [Product]
+                },
+                {
+                    model: User,
+                    attributes: ['id', 'username']
+                }
+            ],
             order: [['createdAt', 'DESC']]
         });
         res.json(orders);
     } catch (error) {
+        console.error('Failed to fetch orders:', error);
         res.status(500).json({ error: 'Failed to fetch orders' });
+    }
+});
+
+app.put('/api/admin/orders/:id/status', verifyToken, verifyAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        await Sale.update({ status }, { where: { id: req.params.id } });
+        res.json({ success: true, status });
+    } catch (error) {
+        res.status(500).json({ error: 'Status update failed' });
     }
 });
 
@@ -102,6 +127,29 @@ app.put('/api/admin/orders/:id/confirm', verifyToken, verifyAdmin, async (req, r
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Update failed' });
+    }
+});
+
+app.get('/api/admin/stats', verifyToken, verifyAdmin, async (req, res) => {
+    try {
+        const totalOrders = await Sale.count();
+        const pendingOrders = await Sale.count({ where: { status: 'Pending' } });
+        const confirmedOrders = await Sale.count({ where: { status: 'Confirmed' } });
+        const totalRevenue = await Sale.sum('totalAmount') || 0;
+        const totalProducts = await Product.count();
+        const totalCustomers = await User.count({ where: { role: 'customer' } });
+
+        res.json({
+            totalOrders,
+            pendingOrders,
+            confirmedOrders,
+            totalRevenue: Math.round(totalRevenue),
+            totalProducts,
+            totalCustomers
+        });
+    } catch (error) {
+        console.error('Failed to fetch stats:', error);
+        res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
 
@@ -214,7 +262,7 @@ const seedData = async () => {
     }
 };
 
-sequelize.sync({ alter: true })
+sequelize.sync()
     .then(async () => {
         await seedData();
 

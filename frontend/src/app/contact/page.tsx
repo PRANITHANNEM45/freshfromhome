@@ -5,7 +5,7 @@ import React from 'react';
 export default function Contact() {
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-            <div className="card glass" style={{ padding: '3rem' }}>
+            <div className="card glass">
                 <h1 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Contact Us</h1>
                 <p style={{ marginBottom: '2rem', fontSize: '1.1rem', color: 'var(--text-muted)' }}>
                     We are here to help! Reach out to us for any queries about our fresh products or delivery.

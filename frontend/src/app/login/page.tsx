@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/config/api';
 
 export default function Login() {
     const [isRegister, setIsRegister] = useState(false);
@@ -17,7 +18,7 @@ export default function Login() {
         const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
 
         try {
-            const res = await fetch(`http://localhost:5000${endpoint}`, {
+            const res = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })

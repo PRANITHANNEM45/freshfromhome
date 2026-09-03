@@ -9,7 +9,11 @@ const Sale = sequelize.define('Sale', {
     totalAmount: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
     status: { type: DataTypes.ENUM('Pending', 'Confirmed', 'Cancelled', 'Delivered'), defaultValue: 'Pending' },
     paymentMethod: { type: DataTypes.STRING, defaultValue: 'Cash' },
-    shippingAddress: { type: DataTypes.STRING, allowNull: true }
+    shippingAddress: { type: DataTypes.STRING, allowNull: true },
+    customerName: { type: DataTypes.STRING, allowNull: true },
+    customerMobile: { type: DataTypes.STRING, allowNull: true },
+    paymentRef: { type: DataTypes.STRING, allowNull: true },
+    paymentStatus: { type: DataTypes.STRING, defaultValue: 'Pending' }
 });
 
 Sale.belongsTo(Customer);

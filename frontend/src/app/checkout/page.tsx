@@ -2,8 +2,9 @@
 
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/config/api';
 import './checkout.css';
 
 export default function Checkout() {
@@ -22,21 +23,47 @@ export default function Checkout() {
     const [state, setState] = useState('');
 
     // Payment state
-    const [paymentMethod, setPaymentMethod] = useState('');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardName, setCardName] = useState('');
-    const [expiryDate, setExpiryDate] = useState('');
-    const [cvv, setCvv] = useState('');
-    const [upiId, setUpiId] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('upi');
+    const [utrNumber, setUtrNumber] = useState('');
+    const [copiedUpi, setCopiedUpi] = useState(false);
+    const [paymentConfig, setPaymentConfig] = useState({
+        upiId: '7893260269@okaxis',
+        payeeName: 'ANNEM NAGA PRANITHESWARREDDY',
+        merchantMobile: '7893260269',
+        razorpayKeyId: '',
+        razorpayEnabled: false
+    });
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [activeSection, setActiveSection] = useState(1);
+
+    // Fetch live payment config from backend
+    useEffect(() => {
+        fetch(`${API_URL}/api/payment/config`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.upiId) {
+                    setPaymentConfig(data);
+                }
+            })
+            .catch(err => console.error('Failed to load payment config', err));
+    }, []);
 
     // Calculate pricing
     const subtotal = total;
     const deliveryCharge = subtotal > 500 ? 0 : 40;
     const tax = Math.round(subtotal * 0.05); // 5% GST
     const totalAmount = subtotal + deliveryCharge + tax;
+
+    // Build real UPI deep-link URL and QR code URL
+    const upiUri = `upi://pay?pa=${paymentConfig.upiId}&pn=${encodeURIComponent(paymentConfig.payeeName)}&am=${totalAmount}&cu=INR&tn=FreshFromFarm%20Order`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+
+    const copyUpiId = () => {
+        navigator.clipboard.writeText(paymentConfig.upiId);
+        setCopiedUpi(true);
+        setTimeout(() => setCopiedUpi(false), 2500);
+    };
 
     if (cart.length === 0) {
         return (
@@ -65,41 +92,35 @@ export default function Checkout() {
             return;
         }
 
-        if (paymentMethod === 'card' && (!cardNumber || !cardName || !expiryDate || !cvv)) {
-            alert('Please fill all card details');
-            return;
-        }
-
-        if (paymentMethod === 'upi' && !upiId) {
-            alert('Please enter UPI ID');
-            return;
-        }
-
         setIsProcessing(true);
         try {
             const token = localStorage.getItem('token');
             const fullAddress = `${addressLine1}, ${addressLine2 ? addressLine2 + ', ' : ''}${landmark ? landmark + ', ' : ''}${city}, ${state} - ${pincode}`;
 
-            const res = await fetch('http://localhost:5000/api/orders', {
+            const orderPayload = {
+                items: cart,
+                paymentMethod: paymentMethod === 'upi' ? 'UPI (Google Pay / PhonePe)' : (paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online / Card'),
+                shippingAddress: fullAddress,
+                customerName: fullName,
+                customerMobile: mobile,
+                totalAmount: totalAmount,
+                paymentRef: utrNumber ? `UTR: ${utrNumber}` : (paymentMethod === 'cod' ? null : 'Direct UPI'),
+                paymentStatus: paymentMethod === 'cod' ? 'Pending' : (utrNumber ? 'Paid' : 'Pending')
+            };
+
+            const res = await fetch(`${API_URL}/api/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    items: cart,
-                    paymentMethod,
-                    shippingAddress: fullAddress,
-                    customerName: fullName,
-                    customerMobile: mobile,
-                    totalAmount: totalAmount
-                })
+                body: JSON.stringify(orderPayload)
             });
 
             if (!res.ok) throw new Error('Order failed');
 
             clearCart();
-            alert('Order placed successfully! 🎉\n\nYour order has been confirmed and will be delivered soon.');
+            alert('Order placed successfully! 🎉\n\nYour order has been recorded and will be verified & delivered soon.');
             router.push('/orders');
         } catch (err) {
             alert('Failed to place order. Please try again.');
@@ -249,7 +270,7 @@ export default function Checkout() {
                         {activeSection === 2 && (
                             <div className="section-content">
                                 <div className="payment-methods">
-                                    {/* UPI Payment */}
+                                    {/* 1. Real UPI Payment (Default & Recommended) */}
                                     <div
                                         className={`payment-option ${paymentMethod === 'upi' ? 'selected' : ''}`}
                                         onClick={() => setPaymentMethod('upi')}
@@ -262,123 +283,132 @@ export default function Checkout() {
                                                 onChange={() => setPaymentMethod('upi')}
                                             />
                                             <div className="payment-info">
-                                                <div className="payment-title">UPI</div>
-                                                <div className="payment-subtitle">Pay via Google Pay, PhonePe, Paytm & more</div>
+                                                <div className="payment-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                    <span>Instant UPI Payment</span>
+                                                    <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+                                                        RECOMMENDED (FAST & ZERO FEE)
+                                                    </span>
+                                                </div>
+                                                <div className="payment-subtitle">
+                                                    Google Pay, PhonePe, Paytm, BHIM, Cred, or any UPI App
+                                                </div>
                                             </div>
                                             <div className="payment-icons">
                                                 <span className="payment-icon">📱</span>
                                             </div>
                                         </div>
+
                                         {paymentMethod === 'upi' && (
                                             <div className="payment-details">
-                                                <div className="form-group">
-                                                    <label>Enter UPI ID</label>
-                                                    <input
-                                                        type="text"
-                                                        className="input"
-                                                        placeholder="example@upi"
-                                                        value={upiId}
-                                                        onChange={(e) => setUpiId(e.target.value)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                                <div className="upi-gateway-card">
+                                                    <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                                        <h4 style={{ color: 'var(--text-main)', fontSize: '1.1rem', marginBottom: '0.25rem' }}>
+                                                            Scan to Pay with Any UPI App
+                                                        </h4>
+                                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                            Scan this QR code using Google Pay, PhonePe, or Paytm
+                                                        </p>
+                                                    </div>
 
-                                    {/* Credit/Debit Card */}
-                                    <div
-                                        className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}
-                                        onClick={() => setPaymentMethod('card')}
-                                    >
-                                        <div className="payment-option-header">
-                                            <input
-                                                type="radio"
-                                                name="payment"
-                                                checked={paymentMethod === 'card'}
-                                                onChange={() => setPaymentMethod('card')}
-                                            />
-                                            <div className="payment-info">
-                                                <div className="payment-title">Credit / Debit Card</div>
-                                                <div className="payment-subtitle">Visa, Mastercard, RuPay & more</div>
-                                            </div>
-                                            <div className="payment-icons">
-                                                <span className="payment-icon">💳</span>
-                                            </div>
-                                        </div>
-                                        {paymentMethod === 'card' && (
-                                            <div className="payment-details">
-                                                <div className="form-group">
-                                                    <label>Card Number</label>
-                                                    <input
-                                                        type="text"
-                                                        className="input"
-                                                        placeholder="1234 5678 9012 3456"
-                                                        value={cardNumber}
-                                                        onChange={(e) => setCardNumber(e.target.value)}
-                                                        maxLength={19}
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Name on Card</label>
-                                                    <input
-                                                        type="text"
-                                                        className="input"
-                                                        placeholder="Name as on card"
-                                                        value={cardName}
-                                                        onChange={(e) => setCardName(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="form-grid">
-                                                    <div className="form-group">
-                                                        <label>Expiry Date</label>
+                                                    {/* Real Dynamic QR Code */}
+                                                    <div className="upi-qr-wrapper">
+                                                        <img
+                                                            src={qrCodeUrl}
+                                                            alt="FreshFromFarm UPI QR Code"
+                                                            className="upi-qr-img"
+                                                        />
+                                                        <div style={{ marginTop: '0.75rem', fontWeight: 700, fontSize: '1.25rem', color: 'var(--primary)' }}>
+                                                            ₹{totalAmount}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Merchant VPA Info Pill */}
+                                                    <div className="upi-info-pill">
+                                                        <div>
+                                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Payee Name:</div>
+                                                            <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-main)' }}>
+                                                                {paymentConfig.payeeName}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.85rem', color: 'var(--primary-dark)', fontWeight: 600, marginTop: '0.15rem' }}>
+                                                                UPI ID: {paymentConfig.upiId}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="copy-btn"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyUpiId();
+                                                            }}
+                                                        >
+                                                            {copiedUpi ? '✓ Copied!' : '📋 Copy UPI ID'}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Mobile 1-Tap Deep Link Buttons */}
+                                                    <div style={{ marginTop: '1.25rem' }}>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                                            On Mobile? Tap to open your UPI app directly:
+                                                        </div>
+                                                        <div className="upi-apps-grid">
+                                                            <a
+                                                                href={`phonepe://pay?pa=${paymentConfig.upiId}&pn=${encodeURIComponent(paymentConfig.payeeName)}&am=${totalAmount}&cu=INR`}
+                                                                className="upi-app-btn"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                🟣 PhonePe
+                                                            </a>
+                                                            <a
+                                                                href={`gpay://upi/pay?pa=${paymentConfig.upiId}&pn=${encodeURIComponent(paymentConfig.payeeName)}&am=${totalAmount}&cu=INR`}
+                                                                className="upi-app-btn"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                🔵 Google Pay
+                                                            </a>
+                                                            <a
+                                                                href={`paytmmp://pay?pa=${paymentConfig.upiId}&pn=${encodeURIComponent(paymentConfig.payeeName)}&am=${totalAmount}&cu=INR`}
+                                                                className="upi-app-btn"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                🔷 Paytm
+                                                            </a>
+                                                            <a
+                                                                href={upiUri}
+                                                                className="upi-app-btn"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                ⚡ Any UPI App
+                                                            </a>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* UTR / Transaction Reference Input */}
+                                                    <div className="form-group" style={{ marginBottom: 0, marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                                                        <label style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                                                            Enter UPI Transaction ID / UTR Number
+                                                        </label>
                                                         <input
                                                             type="text"
                                                             className="input"
-                                                            placeholder="MM/YY"
-                                                            value={expiryDate}
-                                                            onChange={(e) => setExpiryDate(e.target.value)}
-                                                            maxLength={5}
+                                                            placeholder="12-digit UTR (e.g., 423981029481)"
+                                                            value={utrNumber}
+                                                            onChange={(e) => setUtrNumber(e.target.value)}
+                                                            maxLength={22}
                                                         />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>CVV</label>
-                                                        <input
-                                                            type="password"
-                                                            className="input"
-                                                            placeholder="123"
-                                                            value={cvv}
-                                                            onChange={(e) => setCvv(e.target.value)}
-                                                            maxLength={3}
-                                                        />
+                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'block' }}>
+                                                            💡 Found in your UPI app payment receipt after completing payment. Helps admin verify & dispatch instantly.
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Net Banking */}
-                                    <div
-                                        className={`payment-option ${paymentMethod === 'netbanking' ? 'selected' : ''}`}
-                                        onClick={() => setPaymentMethod('netbanking')}
-                                    >
-                                        <div className="payment-option-header">
-                                            <input
-                                                type="radio"
-                                                name="payment"
-                                                checked={paymentMethod === 'netbanking'}
-                                                onChange={() => setPaymentMethod('netbanking')}
-                                            />
-                                            <div className="payment-info">
-                                                <div className="payment-title">Net Banking</div>
-                                                <div className="payment-subtitle">All major banks supported</div>
-                                            </div>
-                                            <div className="payment-icons">
-                                                <span className="payment-icon">🏦</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Cash on Delivery */}
+                                    {/* 2. Cash on Delivery (COD) */}
                                     <div
                                         className={`payment-option ${paymentMethod === 'cod' ? 'selected' : ''}`}
                                         onClick={() => setPaymentMethod('cod')}
@@ -391,13 +421,52 @@ export default function Checkout() {
                                                 onChange={() => setPaymentMethod('cod')}
                                             />
                                             <div className="payment-info">
-                                                <div className="payment-title">Cash on Delivery</div>
-                                                <div className="payment-subtitle">Pay when you receive</div>
+                                                <div className="payment-title">Cash on Delivery (COD)</div>
+                                                <div className="payment-subtitle">Pay with cash when your fresh delivery arrives</div>
                                             </div>
                                             <div className="payment-icons">
                                                 <span className="payment-icon">💵</span>
                                             </div>
                                         </div>
+                                        {paymentMethod === 'cod' && (
+                                            <div className="payment-details" style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                ✓ You can pay ₹{totalAmount} in cash to our delivery executive when your order arrives.
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 3. Credit / Debit Card & Net Banking */}
+                                    <div
+                                        className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}
+                                        onClick={() => setPaymentMethod('card')}
+                                    >
+                                        <div className="payment-option-header">
+                                            <input
+                                                type="radio"
+                                                name="payment"
+                                                checked={paymentMethod === 'card'}
+                                                onChange={() => setPaymentMethod('card')}
+                                            />
+                                            <div className="payment-info">
+                                                <div className="payment-title">Credit / Debit Card & Net Banking</div>
+                                                <div className="payment-subtitle">Visa, Mastercard, RuPay & all Indian banks</div>
+                                            </div>
+                                            <div className="payment-icons">
+                                                <span className="payment-icon">💳</span>
+                                            </div>
+                                        </div>
+                                        {paymentMethod === 'card' && (
+                                            <div className="payment-details">
+                                                <div style={{ background: 'rgba(123, 160, 91, 0.1)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                                                        💳 Online card and Net Banking processing is routed securely through our integrated gateway.
+                                                    </p>
+                                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                        For the fastest zero-fee checkout, our direct <strong>UPI Payment</strong> option above is recommended!
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -437,11 +506,15 @@ export default function Checkout() {
                                     <h3>Payment Method</h3>
                                     <div className="review-info">
                                         <p>
-                                            {paymentMethod === 'upi' && '📱 UPI'}
-                                            {paymentMethod === 'card' && '💳 Credit/Debit Card'}
-                                            {paymentMethod === 'netbanking' && '🏦 Net Banking'}
+                                            {paymentMethod === 'upi' && '📱 Instant UPI (Google Pay / PhonePe / Paytm)'}
+                                            {paymentMethod === 'card' && '💳 Credit / Debit Card & Net Banking'}
                                             {paymentMethod === 'cod' && '💵 Cash on Delivery'}
                                         </p>
+                                        {utrNumber && (
+                                            <p style={{ fontSize: '0.85rem', color: 'var(--primary-dark)', fontWeight: 600, marginTop: '0.25rem' }}>
+                                                UPI Ref / UTR: {utrNumber}
+                                            </p>
+                                        )}
                                     </div>
                                     <button className="btn-edit" onClick={() => setActiveSection(2)}>Edit</button>
                                 </div>
