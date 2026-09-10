@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
@@ -16,12 +18,48 @@ const { verifyToken, verifyAdmin } = require('./middleware/auth');
 
 const app = express();
 
+// Security Headers
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// CORS Configuration
 app.use(cors());
-app.use(express.json());
+
+// Strict Request Payload Limit (prevents memory exhaustion / DoS)
+app.use(express.json({ limit: '50kb' }));
+
+// Anti-DDoS & Rate Limiting
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 300, // 300 requests per IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests from this IP, please try again later.' }
+});
+app.use('/api/', globalLimiter);
+
+// Brute-force protection on Auth endpoints
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 15, // max 15 attempts
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' }
+});
+
+// Transaction protection on Order creation
+const orderLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 25,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Order submission limit reached. Please wait before placing more orders.' }
+});
 
 // Auth Routes
-app.post('/api/auth/register', authController.register);
-app.post('/api/auth/login', authController.login);
+app.post('/api/auth/register', authLimiter, authController.register);
+app.post('/api/auth/login', authLimiter, authController.login);
 
 // Admin User Management
 app.post('/api/admin/users', verifyToken, verifyAdmin, authController.createStaff);
@@ -74,7 +112,7 @@ app.post('/api/payment/razorpay/create-order', verifyToken, orderController.crea
 app.post('/api/payment/razorpay/verify', verifyToken, orderController.verifyRazorpayPayment);
 
 // Order Routes
-app.post('/api/orders', verifyToken, orderController.createOrder); // Customer creates order
+app.post('/api/orders', verifyToken, orderLimiter, orderController.createOrder); // Customer creates order
 
 app.get('/api/orders/my', verifyToken, async (req, res) => {
     try {

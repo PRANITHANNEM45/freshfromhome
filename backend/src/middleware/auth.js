@@ -1,15 +1,23 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (!token) return res.status(403).json({ error: 'No token provided' });
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || typeof authHeader !== 'string') {
+        return res.status(401).json({ error: 'Access denied: No authorization header provided' });
+    }
 
+    const parts = authHeader.split(' ');
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+        return res.status(401).json({ error: 'Access denied: Invalid token format. Format must be Bearer <token>' });
+    }
+
+    const token = parts[1];
     try {
-        const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET || 'secret_key');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey123');
         req.user = decoded;
         next();
     } catch (err) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Access denied: Token is invalid or expired' });
     }
 };
 
