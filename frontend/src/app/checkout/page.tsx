@@ -24,7 +24,6 @@ export default function Checkout() {
 
     // Payment state
     const [paymentMethod, setPaymentMethod] = useState('upi');
-    const [utrNumber, setUtrNumber] = useState('');
     const [copiedUpi, setCopiedUpi] = useState(false);
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [showUpiModal, setShowUpiModal] = useState(false);
@@ -100,7 +99,7 @@ export default function Checkout() {
                 customerName: fullName,
                 customerMobile: mobile,
                 totalAmount: totalAmount,
-                paymentRef: orderOverrides?.paymentRef || (utrNumber ? `UTR: ${utrNumber}` : (paymentMethod === 'cod' ? null : 'DIRECT_APP_PAYMENT')),
+                paymentRef: orderOverrides?.paymentRef || (paymentMethod === 'cod' ? null : 'DIRECT_UPI_APP'),
                 paymentStatus: orderOverrides?.paymentStatus || (paymentMethod === 'cod' ? 'Pending' : 'Paid')
             };
 
@@ -484,24 +483,6 @@ export default function Checkout() {
                                                             🚀 Open UPI App & Pay ₹{totalAmount}
                                                         </button>
                                                     </div>
-
-                                                    {/* UTR / Transaction Reference Input */}
-                                                    <div className="form-group" style={{ marginBottom: 0, marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-                                                        <label style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                                                            Enter UPI Transaction ID / UTR Number
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            className="input"
-                                                            placeholder="12-digit UTR (e.g., 423981029481)"
-                                                            value={utrNumber}
-                                                            onChange={(e) => setUtrNumber(e.target.value)}
-                                                            maxLength={22}
-                                                        />
-                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'block' }}>
-                                                            💡 Found in your UPI app payment receipt after completing payment. Helps admin verify & dispatch instantly.
-                                                        </span>
-                                                    </div>
                                                 </div>
                                             </div>
                                         )}
@@ -617,11 +598,6 @@ export default function Checkout() {
                                             {paymentMethod === 'card' && '💳 Credit / Debit Card & Net Banking'}
                                             {paymentMethod === 'cod' && '💵 Cash on Delivery'}
                                         </p>
-                                        {utrNumber && (
-                                            <p style={{ fontSize: '0.85rem', color: 'var(--primary-dark)', fontWeight: 600, marginTop: '0.25rem' }}>
-                                                UPI Ref / UTR: {utrNumber}
-                                            </p>
-                                        )}
                                     </div>
                                     <button className="btn-edit" onClick={() => setActiveSection(2)}>Edit</button>
                                 </div>
@@ -716,23 +692,11 @@ export default function Checkout() {
                             </p>
                         </div>
 
-                        <div style={{ background: 'rgba(123, 160, 91, 0.1)', border: '1px dashed var(--primary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-                            <p style={{ margin: 0, color: 'var(--text-main)', lineHeight: 1.5 }}>
-                                1. Complete payment in PhonePe, Google Pay, or Paytm.<br />
-                                2. Copy the 12-digit UTR from the receipt.<br />
-                                3. Tap <strong>"Payment Done - Place Order"</strong> below.
+                        <div style={{ background: 'rgba(123, 160, 91, 0.1)', border: '1px dashed var(--primary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                            <p style={{ margin: 0, color: 'var(--text-main)', lineHeight: 1.6 }}>
+                                1. Complete payment in your UPI app (PhonePe, Google Pay, Paytm, etc.).<br />
+                                2. Tap <strong>"Payment Done - Place Order"</strong> below to confirm.
                             </p>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>UPI Reference / UTR Number (Optional)</label>
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="e.g. 423981029481"
-                                value={utrNumber}
-                                onChange={(e) => setUtrNumber(e.target.value)}
-                            />
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -741,7 +705,7 @@ export default function Checkout() {
                                 className="btn btn-primary"
                                 style={{ width: '100%', padding: '0.9rem', fontSize: '1rem' }}
                                 disabled={isProcessing}
-                                onClick={() => submitOrder({ paymentMethod: 'UPI (App Payment)', paymentRef: utrNumber ? `UTR: ${utrNumber}` : 'DIRECT_UPI_APP', paymentStatus: 'Paid' })}
+                                onClick={() => submitOrder({ paymentMethod: 'UPI (App Payment)', paymentRef: 'DIRECT_UPI_APP', paymentStatus: 'Paid' })}
                             >
                                 {isProcessing ? 'Confirming Order...' : '✓ Payment Done - Place Order'}
                             </button>
