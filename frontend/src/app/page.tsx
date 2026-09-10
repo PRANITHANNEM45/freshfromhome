@@ -179,7 +179,7 @@ export default function LandingPage() {
             <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
           </div>
 
-          <Link href="/login" style={{ textDecoration: 'none' }}>
+          <Link href="/login?type=staff" style={{ textDecoration: 'none' }}>
             <button
               className="btn"
               style={{

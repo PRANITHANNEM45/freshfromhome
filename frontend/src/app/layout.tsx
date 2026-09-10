@@ -57,13 +57,15 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             >
               🥬 Inventory & Stock
             </Link>
-            <Link
-              href="/admin/users"
-              className={`sidebar-link ${pathname === '/admin/users' ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              👥 Manage Staff
-            </Link>
+            {user?.role === 'admin' && user?.username?.toLowerCase() === 'pranith' && (
+              <Link
+                href="/admin/users"
+                className={`sidebar-link ${pathname === '/admin/users' ? 'active' : ''}`}
+                onClick={onClose}
+              >
+                👥 Manage Staff
+              </Link>
+            )}
           </nav>
 
           <button

@@ -24,7 +24,7 @@ const Product = require('./models/Product');
 const { Sale, SaleItem } = require('./models/Sale');
 const authController = require('./controllers/authController');
 const orderController = require('./controllers/orderController');
-const { verifyToken, verifyAdmin } = require('./middleware/auth');
+const { verifyToken, verifyAdmin, verifyMasterAdmin } = require('./middleware/auth');
 
 const app = express();
 
@@ -74,8 +74,10 @@ const orderLimiter = rateLimit({
 app.post('/api/auth/register', authLimiter, authController.register);
 app.post('/api/auth/login', authLimiter, authController.login);
 
-// Admin User Management
-app.post('/api/admin/users', verifyToken, verifyAdmin, authController.createStaff);
+// Admin User Management (Strictly licensed to Master Admin: pranith)
+app.post('/api/admin/users', verifyToken, verifyMasterAdmin, authController.createStaff);
+app.get('/api/admin/users', verifyToken, verifyMasterAdmin, authController.getStaffUsers);
+app.delete('/api/admin/users/:id', verifyToken, verifyMasterAdmin, authController.deleteStaffUser);
 
 // Product Routes
 app.get('/api/products', async (req, res) => {
@@ -207,11 +209,13 @@ app.get('/api/admin/stats', verifyToken, verifyAdmin, async (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 const seedData = async () => {
-    // Seed Admin
+    // Seed Master Admin (pranith / pranith123)
+    const hash = await bcrypt.hash('pranith123', 10);
     const adminExists = await User.findOne({ where: { username: 'pranith' } });
     if (!adminExists) {
-        const hash = await bcrypt.hash('pranith123', 10);
         await User.create({ username: 'pranith', password: hash, role: 'admin' });
+    } else {
+        await User.update({ password: hash, role: 'admin' }, { where: { username: 'pranith' } });
     }
 
     // Seed Products with Images

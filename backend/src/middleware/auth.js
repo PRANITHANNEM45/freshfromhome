@@ -22,10 +22,20 @@ const verifyToken = (req, res, next) => {
 };
 
 const verifyAdmin = (req, res, next) => {
-    if (req.user.role !== 'admin' && req.user.role !== 'staff') {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'staff')) {
         return res.status(403).json({ error: 'Requires Admin/Staff Access' });
     }
     next();
 };
 
-module.exports = { verifyToken, verifyAdmin };
+// Strict Master Admin check: Only 'pranith' with role 'admin' has license to manage staff
+const verifyMasterAdmin = (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin' || req.user.username.toLowerCase() !== 'pranith') {
+        return res.status(403).json({
+            error: 'Access Denied: Only Master Admin (pranith) has license to create and manage staff accounts.'
+        });
+    }
+    next();
+};
+
+module.exports = { verifyToken, verifyAdmin, verifyMasterAdmin };
