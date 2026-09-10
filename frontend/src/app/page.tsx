@@ -181,18 +181,22 @@ export default function LandingPage() {
 
           <Link href="/login" style={{ textDecoration: 'none' }}>
             <button
-              className="btn glass"
+              className="btn"
               style={{
                 width: '100%',
                 fontSize: '1.1rem',
-                color: '#cbd5e1',
+                backgroundColor: '#0f2b5c',
+                color: '#ffffff',
                 padding: '1rem',
                 fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                border: '1px solid rgba(255,255,255,0.2)',
+                border: '1px solid #1e3a8a',
+                borderRadius: 'var(--radius-sm)',
+                boxShadow: '0 4px 14px rgba(15, 43, 92, 0.4)',
+                cursor: 'pointer',
                 transition: 'all 0.3s ease'
               }}
             >
