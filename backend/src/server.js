@@ -3,6 +3,16 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
+
+// Global Crash Prevention (Prevents server crash on unexpected runtime errors)
+process.on('uncaughtException', (err) => {
+    console.error('🔥 CRASH PREVENTED - Uncaught Exception:', err.message, err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🔥 CRASH PREVENTED - Unhandled Promise Rejection:', reason);
+});
 
 dotenv.config();
 
@@ -17,6 +27,9 @@ const orderController = require('./controllers/orderController');
 const { verifyToken, verifyAdmin } = require('./middleware/auth');
 
 const app = express();
+
+// High-Throughput HTTP Compression (Reduces payload size by up to 75%)
+app.use(compression());
 
 // Security Headers
 app.use(helmet({
@@ -300,6 +313,18 @@ const seedData = async () => {
     }
 };
 
+// Centralized Error Handling Middleware (Prevents server crashes from unhandled route errors)
+app.use((err, req, res, next) => {
+    console.error('Handled API Error:', err.message);
+    if (res.headersSent) {
+        return next(err);
+    }
+    res.status(err.status || 500).json({
+        error: 'A server error occurred. Please try again.',
+        code: 'INTERNAL_ERROR'
+    });
+});
+
 sequelize.sync()
     .then(async () => {
         await seedData();
@@ -308,8 +333,12 @@ sequelize.sync()
         await Product.update({ image: '/real_onion.png' }, { where: { name: 'Onion' } });
         await Product.update({ image: '/real_green_chilli.png' }, { where: { name: 'Green Chilli' } });
 
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
+
+        // High-concurrency socket configuration
+        server.keepAliveTimeout = 65000; // 65 seconds
+        server.headersTimeout = 66000;
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error('Database initialization error:', err));
