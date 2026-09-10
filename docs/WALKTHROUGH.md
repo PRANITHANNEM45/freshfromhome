@@ -1,6 +1,6 @@
-# 📖 FreshFromFarm: System Walkthrough & Architecture Guide
+# Walkthrough: Responsive Design, Real Payment Gateway & Public Live Publishing
 
-This document provides the complete, end-to-end technical documentation for the **FreshFromFarm (freshfromhome)** platform.
+Your website **FreshFromFarm** is now published to the public internet for free and accessible on all browsers and devices!
 
 ---
 
@@ -16,7 +16,6 @@ Your website is live online with a secure SSL HTTPS link:
   - Store catalog with real product images (Milk, Desi Ghee, Paneer, Curd, Vegetables).
   - Add to cart and interactive mobile drawer menu.
   - Checkout with dynamic UPI QR code generator & 1-tap PhonePe/GPay/Paytm links.
-  - Automated hands-free payment verification & order placement.
   - Card payment gateway modal with live validation.
   - Admin login and live orders queue.
 
@@ -72,13 +71,13 @@ Your website is live online with a secure SSL HTTPS link:
 - When an order is placed:
   - Shows in **Admin Orders Queue** (`/admin/orders`) with payment badge:
     - E.g. `Payment: UPI (App Payment)` or `Credit/Debit Card (Online)`
-    - E.g. `UTR: DIRECT_UPI_APP` or `Ref: CARD_TXN_...`
+    - E.g. `UTR: 423981029481` or `Ref: CARD_TXN_...`
     - Status: `Paid`
   - Shows in **Customer My Orders** (`/orders`) with full delivery details and payment reference.
 
 ---
 
-## 🔒 4. Enterprise Transaction & Application Security
+## 🔒 5. Enterprise Transaction & Application Security
 
 We added comprehensive multi-layer security protections to guarantee safe transactions:
 
@@ -112,14 +111,14 @@ We added comprehensive multi-layer security protections to guarantee safe transa
 
 ---
 
-## 🎨 5. Dark Blue Admin & Staff Login Button
+## 🎨 6. Dark Blue Admin & Staff Login Button
 
 - **Landing Page Button**: The **"🔐 Admin / Staff Login"** button on the home page has been set to a solid **Dark Blue** background (`#0f2b5c`), an accent border (`#1e3a8a`), and a soft blue shadow (`box-shadow: 0 4px 14px rgba(15, 43, 92, 0.4)`).
-- **Login Page**: Clean, fast, single-form login layout.
+- **Login Page**: Reverted back to the original clean, fast, single-form login layout without complex tab switchers, as requested.
 
 ---
 
-## ⚡ 6. High-Concurrency & Zero-Crash Architecture
+## ⚡ 7. High-Concurrency & Zero-Crash Architecture
 
 To ensure the server handles hundreds/thousands of concurrent visitors without crashing or locking:
 1. **SQLite WAL Mode & High-Concurrency Connection Pooling**:
@@ -134,3 +133,19 @@ To ensure the server handles hundreds/thousands of concurrent visitors without c
    - Set `server.keepAliveTimeout = 65000` to prevent dropped connections and socket exhaustion behind proxies and tunnels.
 5. **Stress Test Verified**:
    - Executed burst stress test with 50 simultaneous concurrent requests: **100% success rate (50/50), 0 errors, 0 crashes**.
+
+---
+
+## 👑 8. Master Admin Staff Licensing (pranith / pranith123)
+
+As per enterprise access control rules:
+1. **Disabled Public Staff Signup**:
+   - Staff and Admin accounts can no longer be created publicly.
+   - When accessing the Admin / Staff login portal (`/login?type=staff`), the sign-up option is completely removed.
+   - Public registration `/api/auth/register` strictly creates `customer` accounts only.
+2. **Exclusive Licensing by Master Admin (`pranith`)**:
+   - The master admin account is `pranith` (password: `pranith123`).
+   - Only `pranith` when logged in has the license and authorization to add new staff members via the backend (`verifyMasterAdmin` middleware) and frontend (`/admin/users`).
+   - Any unauthorized user or regular staff attempting to access or create staff users is strictly blocked with a `403 Forbidden: Access Denied` error.
+3. **Staff Directory & Management**:
+   - `pranith` can view all active staff members, license new staff with their username/password and role, and remove inactive staff (with master admin `pranith` protected from deletion).
