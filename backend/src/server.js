@@ -36,8 +36,17 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS Configuration
-app.use(cors());
+// CORS Configuration (Permits Vercel production frontend, previews, and custom domains)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : '*';
+
+app.use(cors({
+    origin: allowedOrigins === '*' ? true : allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // Strict Request Payload Limit (prevents memory exhaustion / DoS)
 app.use(express.json({ limit: '50kb' }));
