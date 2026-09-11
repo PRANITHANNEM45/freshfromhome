@@ -70,6 +70,15 @@ const orderLimiter = rateLimit({
     message: { error: 'Order submission limit reached. Please wait before placing more orders.' }
 });
 
+// Health Check Endpoint (Used by Cloud Platforms like Render/Railway for 24/7 uptime monitoring)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'FreshFromFarm Backend API is running 24/7 in the cloud.' });
+});
+
 // Auth Routes
 app.post('/api/auth/register', authLimiter, authController.register);
 app.post('/api/auth/login', authLimiter, authController.login);

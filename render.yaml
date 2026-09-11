@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: freshfromhome-backend
+    env: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MERCHANT_UPI_ID
+        value: annemnagapranitheswarreddy45-2@okicici
+      - key: MERCHANT_PAYEE_NAME
+        value: ANNEM NAGA PRANITHESWARREDDY
