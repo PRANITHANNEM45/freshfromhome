@@ -149,3 +149,20 @@ As per enterprise access control rules:
    - Any unauthorized user or regular staff attempting to access or create staff users is strictly blocked with a `403 Forbidden: Access Denied` error.
 3. **Staff Directory & Management**:
    - `pranith` can view all active staff members, license new staff with their username/password and role, and remove inactive staff (with master admin `pranith` protected from deletion).
+
+---
+
+## 🚀 9. 24/7 Autonomous Cloud Hosting Architecture (Zero Laptop Dependency)
+
+We transitioned the project from an ephemeral laptop-dependent tunnel to a production cloud deployment architecture:
+
+1. **Frontend Cloud Tier (Vercel)**:
+   - Configured `frontend/vercel.json` and dynamic API proxy rewrites in `frontend/next.config.ts`.
+   - Connects to GitHub repository (`PRANITHANNEM45/freshfromhome`) with root directory `frontend`.
+   - Deploys on Vercel's global CDN edge with automated SSL, running 24/7 without needing your laptop.
+2. **Backend Cloud Tier (Render.com / Container Host)**:
+   - Configured `render.yaml` blueprint and universal multi-stage `Dockerfile`.
+   - Added cloud uptime health check monitoring endpoints (`/health` and `/`).
+   - Integrated dynamic PostgreSQL support in `backend/src/config/database.js` (`DATABASE_URL`) while preserving SQLite WAL mode for local development.
+3. **Step-by-Step Deployment Guide**:
+   - Created [`docs/CLOUD_DEPLOYMENT_STEP_BY_STEP.md`](file:///D:/pranithannem-projects/project/docs/CLOUD_DEPLOYMENT_STEP_BY_STEP.md) providing clear instructions to link the GitHub repo to Vercel and Render in under 5 minutes with zero cost.
