@@ -38,7 +38,8 @@ function LoginForm() {
                 data = JSON.parse(rawText);
             } catch (parseError) {
                 console.error("Failed to parse JSON response. Raw text:", rawText);
-                throw new Error(rawText.includes('<html') ? 'Server is currently unavailable or booting up. Please try again in a minute.' : 'Invalid response from server.');
+                const snippet = rawText.substring(0, 50).trim();
+                throw new Error(`Server returned non-JSON response: "${snippet}"`);
             }
 
             if (!res.ok) throw new Error(data.error || 'Invalid credentials or request failed');

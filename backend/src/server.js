@@ -354,7 +354,13 @@ sequelize.sync()
         // Update images to use real photos (Customer Request)
         await Product.update({ image: '/real_onion.png' }, { where: { name: 'Onion' } });
         await Product.update({ image: '/real_green_chilli.png' }, { where: { name: 'Green Chilli' } });
-
+        console.log('Database synced successfully.');
+    })
+    .catch(err => {
+        console.error('Database initialization error:', err);
+    })
+    .finally(() => {
+        // ALWAYS start the server, even if DB fails, to prevent 502 Bad Gateway
         const server = app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
@@ -362,5 +368,4 @@ sequelize.sync()
         // High-concurrency socket configuration
         server.keepAliveTimeout = 65000; // 65 seconds
         server.headersTimeout = 66000;
-    })
-    .catch(err => console.error('Database initialization error:', err));
+    });
