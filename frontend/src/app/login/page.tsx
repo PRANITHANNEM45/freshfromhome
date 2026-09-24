@@ -32,7 +32,14 @@ function LoginForm() {
                 body: JSON.stringify({ username, password })
             });
 
-            const data = await res.json();
+            const rawText = await res.text();
+            let data;
+            try {
+                data = JSON.parse(rawText);
+            } catch (parseError) {
+                console.error("Failed to parse JSON response. Raw text:", rawText);
+                throw new Error(rawText.includes('<html') ? 'Server is currently unavailable or booting up. Please try again in a minute.' : 'Invalid response from server.');
+            }
 
             if (!res.ok) throw new Error(data.error || 'Invalid credentials or request failed');
 
