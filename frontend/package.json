@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start -p $PORT",
+    "build": "cd ../backend && npm install && cd ../frontend && next build",
+    "start": "node ../backend/src/server.js & next start -p $PORT",
     "lint": "eslint"
   },
   "dependencies": {

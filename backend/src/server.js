@@ -224,7 +224,8 @@ app.get('/api/admin/stats', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5000;
+// Hardcode backend port to 5000 to prevent conflict with frontend on Render
+const PORT = 5000;
 
 const seedData = async () => {
     // Seed Master Admin (pranith / pranith123)
