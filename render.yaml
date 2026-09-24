@@ -19,3 +19,20 @@ services:
         value: annemnagapranitheswarreddy45-2@okicici
       - key: MERCHANT_PAYEE_NAME
         value: ANNEM NAGA PRANITHESWARREDDY
+
+  - type: web
+    name: freshfromhome-frontend
+    env: node
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    autoDeploy: true
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: freshfromhome-backend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NODE_ENV
+        value: production
